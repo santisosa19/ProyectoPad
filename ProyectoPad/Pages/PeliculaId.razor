@@ -1,0 +1,78 @@
+﻿@page "/peliculas/{id}"
+@inject TMDbService TMDbService
+@inject ApplicationDbContext DbContext
+@inject IJSRuntime JSRuntime
+@using System.Net
+@using ProyectoPad.Data;
+@using ProyectoPad.Models
+
+
+<h1>Detalles de la Película</h1>
+
+@if (pelicula != null)
+{
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <img class="img-fluid" src="@($"https://image.tmdb.org/t/p/w500/{pelicula.poster_path}")" alt="@pelicula.title" />
+            </div>
+            <div class="col-md-8">
+                <h2>@pelicula.title</h2>
+                <p><strong>Descripción:</strong> @pelicula.overview</p>
+                <p>
+                    <strong>Géneros:</strong>
+                    @for (var i = 0; i < pelicula.genres.Count; i++)
+                    {
+                        <span>@pelicula.genres[i].name</span>
+                        @if (i != pelicula.genres.Count - 1)
+                        {
+                            <span>, </span>
+                        }
+                    }
+                </p>
+                <p><strong>Fecha de lanzamiento:</strong> @pelicula.release_date</p>
+                <button class="btn btn-primary" @onclick="AgregarFavorito">Agregar a Favoritos</button>
+                <!-- Otros detalles de la película -->
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <p>Error al cargar los detalles de la película.</p>
+}
+
+
+@code {
+    dynamic pelicula;
+    List<dynamic> favoritos = new List<dynamic>(); // Lista de películas favoritas
+
+    [Parameter]
+    public string id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        string data = await TMDbService.GetPeliculaDetailsAsync(id);
+        pelicula = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(data);
+    }
+
+    private async Task AgregarFavorito()
+    {
+        var favorito = new Favorito
+            {
+                Titulo = pelicula.title,
+                Descripcion = pelicula.overview,
+                poster_path = pelicula.poster_path
+            };
+
+        DbContext.Favoritos.Add(favorito);
+        await DbContext.SaveChangesAsync();
+        await MostrarAlerta("Se agregó correctamente a favoritos.");
+    }
+
+    private async Task MostrarAlerta(string mensaje)
+    {
+        await JSRuntime.InvokeVoidAsync("alert", mensaje);
+    }
+
+}

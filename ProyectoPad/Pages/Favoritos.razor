@@ -1,0 +1,49 @@
+﻿@page "/favoritos"
+@using ProyectoPad.Data;
+@inject TMDbService TMDbService
+@inject ApplicationDbContext DbContext
+@using ProyectoPad.Models
+
+<PageTitle>Favoritos</PageTitle>
+
+<h1>Películas Favoritas</h1>
+
+@if (favoritos.Any())
+{
+    <div class="row">
+        @foreach (var pelicula in favoritos)
+        {
+            <div class="col-md-3 mb-4">
+                <div class="card">
+                    <img class="card-img-top" src="@($"https://image.tmdb.org/t/p/w500/{pelicula.poster_path}")" alt="@pelicula.Titulo" />
+                    <div class="card-body">
+                        <h5 class="card-title">@pelicula.Titulo</h5>
+                        <button class="btn btn-danger" @onclick="() => EliminarFavorito(pelicula)">Eliminar de Favoritos</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <p>No hay películas en la lista de favoritos.</p>
+}
+
+@code {
+
+    private List<Favorito> favoritos;
+
+    protected override void OnInitialized()
+    {
+        // Cargar la lista de películas favoritas al inicio
+        favoritos = DbContext.Favoritos.ToList();
+    }
+
+    private async Task EliminarFavorito(Favorito favorito)
+    {
+        DbContext.Favoritos.Remove(favorito);
+        await DbContext.SaveChangesAsync();
+        favoritos.Remove(favorito);
+    }
+}

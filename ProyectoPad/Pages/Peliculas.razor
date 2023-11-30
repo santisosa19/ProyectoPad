@@ -1,0 +1,56 @@
+﻿@page "/peliculas"
+@inject TMDbService TMDbService
+
+<PageTitle>Películas</PageTitle>
+
+<h1>Películas</h1>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <input type="text" @bind="query" class="form-control" placeholder="Buscar películas..." />
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-primary" @onclick="BuscarPeliculas">Buscar</button>
+    </div>
+</div>
+
+<div class="row">
+    @if (peliculas != null)
+    {
+        @foreach (var pelicula in peliculas.results)
+        {
+            <div class="col-md-3 mb-4">
+                <a href="/peliculas/@pelicula.id">
+                    <div class="card">
+                        <img class="card-img-top" src="@($"https://image.tmdb.org/t/p/w500/{pelicula.poster_path}")" alt="@pelicula.title" />
+                        <div class="card-body">
+                            <h5 class="card-title">@pelicula.title</h5>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        }
+
+    }
+    else
+    {
+        <p>Error al obtener las películas.</p>
+    }
+</div>
+
+@code {
+    dynamic peliculas;
+    string query = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        string data = await TMDbService.GetPeliculasAsync();
+        peliculas = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(data);
+    }
+
+    private async Task BuscarPeliculas()
+    {
+        string data = await TMDbService.BuscarPeliculasAsync(query);
+        peliculas = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(data);
+    }
+}
